@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import './styles.sass';
 
 function InputBar({
@@ -7,27 +7,37 @@ function InputBar({
 
   const [token, setToken] = useState('');
   const [lastToken, setLastToken] = useState();
+  const [newTokenPasted, setNewTokenPasted] = useState(false);
 
-  const handleKeyPress = event => {
-    if (event.key === 'Enter') {
-      triggerTokenChange();
-    }
-  };
+  const handlePaste = useCallback((event) => {
+    const value = (event.clipboardData || window.clipboardData).getData('text');
+    setToken(value);
+    setNewTokenPasted(true);
+    event.preventDefault();
+  }, []);
 
-  const triggerTokenChange = () => {
+  const triggerTokenChange = useCallback(() => {
     if (token && token !== lastToken) {
       onTokenChange(token);
       setLastToken(token);
     }
-  };
+  }, [token, lastToken, onTokenChange]);
+
+  useEffect(() => {
+    if (newTokenPasted) {
+      triggerTokenChange(token);
+      setNewTokenPasted(false);
+    }
+  }, [token, newTokenPasted, triggerTokenChange]);
+
 
   return (
     <div className="input-bar">
       <input
-        placeholder="Enter a Instagram token..."
+        placeholder="Paste an Instagram token here..."
         value={token}
         onChange={({ target: { value } }) => setToken(value)}
-        onKeyPress={handleKeyPress}
+        onPaste={handlePaste}
       />
       <button onClick={() => triggerTokenChange()}>Fetch</button>
     </div>
